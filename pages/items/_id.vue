@@ -2,59 +2,80 @@
   <!-- <div>
     <pre>{{ currentItem }}</pre>
   </div> -->
-  <main class="container parent">
+  <main class="container">
     <section
-      class="image div1"
+      class="image"
       :style="`background: url(/${currentItem.img}) no-repeat center center`"
     ></section>
-    <section class="details div2">
+
+    <section class="details">
       <h1>{{ currentItem.item }}</h1>
       <h1>Price: ${{ currentItem.price }}</h1>
+
       <div class="quantity">
         <input type="number" min="1" v-model="cartNumber" />
-        <button class="primary">Add to Cart -{{ cartValue }}</button>
+        <button @click="addToCart" class="primary">
+          Add to Cart -{{ cartValue }}
+        </button>
       </div>
+      <fieldset v-if="currentItem.options">
+        <legend>Options</legend>
+        <div v-for="opt in currentItem.options" :key="opt">
+          <input
+            :id="opt"
+            type="radio"
+            name="Options"
+            :value="opt"
+            v-model="itemOptions"
+          />
+          <label :for="opt">{{ opt }}</label>
+        </div>
+      </fieldset>
+      <fieldset v-if="currentItem.addOns">
+        <legend>Add Ons</legend>
+        <div v-for="add in currentItem.addOns" :key="add">
+          <input
+            :id="add"
+            type="checkbox"
+            name="addOns"
+            :value="add"
+            v-model="itemAddOns"
+          />
+          <label :for="add">{{ add }}</label>
+        </div>
+      </fieldset>
+
+      <AppToast v-if="cartSubmitted"
+        >Order Submitted <br />
+        Check out more
+        <nuxt-link to="/restaurants">restaurants</nuxt-link>!</AppToast
+      >
     </section>
 
-    <fieldset class="div3">
-      <legend>Options</legend>
-      <div v-for="opt in currentItem.options" :key="opt">
-        <input :id="opt" type="checkbox" name="Options" :value="opt" />
-        <label :for="opt">{{ opt }}</label
-        ><br />
-      </div>
-    </fieldset>
-    <fieldset class="div4">
-      <legend>Add Ons</legend>
-      <div v-for="add in currentItem.addOns" :key="add">
-        <input :id="add" type="checkbox" name="addOns" :value="add" />
-        <label :for="add">{{ add }}</label
-        ><br />
-      </div>
-    </fieldset>
-    <section class="options div5">
+    <section class="options">
       <h3>Description</h3>
       <p>{{ currentItem.description }}</p>
     </section>
-    <pre>{{ currentItem }}</pre>
+    <!-- <pre>{{ currentItem }}</pre> -->
   </main>
-  <!-- <div class="parent">
-    <div class="div1"></div>
-    <div class="div2"></div>
-    <div class="div3"></div>
-    <div class="div4"></div>
-    <div class="div5"></div>
-  </div> -->
 </template>
 
 <script>
 import { mapState } from "vuex";
+import AppToast from "@/components/AppToast.vue";
 
 export default {
+  components: {
+    AppToast,
+  },
   data() {
     return {
       id: this.$route.params.id,
       cartNumber: 1,
+      itemOptions: "",
+      itemAddOns: [],
+      itemSizeAndCost: [],
+      cartSubmitted: false,
     };
   },
   computed: {
@@ -75,31 +96,43 @@ export default {
       return result;
     },
   },
+  methods: {
+    addToCart() {
+      let formOutput = {
+        item: this.currentItem.item,
+        count: this.cartNumber,
+        options: this.itemOptions,
+        addOns: this.itemAddOns,
+        combinedPrice: this.cartValue,
+      };
+      this.cartSubmitted = true;
+      this.$store.commit("addToCart", formOutput);
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
-.parent {
+.container {
+  width: 1000px;
+  margin: 100px auto;
   display: grid;
-  grid-template-columns: 2fr repeat(2, 1fr) repeat(2, 0fr);
-  grid-template-rows: repeat(3, 1fr);
-  grid-column-gap: 35px;
-  grid-row-gap: 20px;
+  grid-template-columns: 400px 1fr;
+  grid-template-rows: 400px 1fr;
+  grid-column-gap: 60px;
+  grid-row-gap: 60px;
+  line-height: 2;
 }
 
-.div1 {
-  grid-area: 1 / 1 / 3 / 2;
+.image {
+  grid-area: 1 / 1 / 2 / 2;
+  background-size: cover;
 }
-.div2 {
-  grid-area: 1 / 2 / 2 / 4;
+.details {
+  grid-area: 1 / 2 / 2 / 3;
+  position: relative;
 }
-.div3 {
-  grid-area: 2 / 2 / 3 / 4;
-}
-.div4 {
-  grid-area: 3 / 2 / 4 / 4;
-}
-.div5 {
-  grid-area: 3 / 1 / 4 / 2;
+.options {
+  grid-area: 2 / 1 / 3 / 2;
 }
 </style>
